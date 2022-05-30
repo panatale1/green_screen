@@ -1,9 +1,9 @@
+from datetime import datetime
 from os import mkdir
 from tkinter import Tk, filedialog, Frame, messagebox
 from tkinter.ttk import *
 
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
 class GreenScreen(object):
@@ -51,9 +51,9 @@ class GreenScreen(object):
             masked_image = np.copy(cropped_image)
             masked_image[mask != 0] = [0,0,0]
             vigo_background[mask == 0] = [0,0,0]
-            dirname = self.filename.split('.')[0]
+            dirname = self.filename.split('.')[0] + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
             mkdir(dirname)
-            cv2.imwrite('{0}/vigo.jpg'.format(dirname), vigo_background + masked_image)
+            cv2.imwrite('{0}/vigo.jpg'.format(dirname), cv2.cvtColor(vigo_background + masked_image, cv2.COLOR_RGB2BGR)) 
             
     def make_gui(self):
         page = Frame(self.root)
