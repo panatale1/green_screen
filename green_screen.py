@@ -1,10 +1,12 @@
 from datetime import datetime
 from os import mkdir
-from tkinter import Tk, filedialog, Frame, messagebox
-from tkinter.ttk import *
+from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label
+#from tkinter.ttk import *
+from tkinter.ttk import Button
 
 import cv2
 import numpy as np
+from PIL import ImageTk, Image
 
 class GreenScreen(object):
     def __init__(self):
@@ -27,6 +29,10 @@ class GreenScreen(object):
             initialdir='/',
             filetypes=file_types
         )
+        #self.input_image = PhotoImage(file=self.filename)
+        #self.input_image_label = Label(self.root, image=self.input_image)
+        #self.input_image_label.grid(row=1, column=0)
+
     def do_greenscreen(self):
         image = cv2.imread(self.filename)
         height, width, colors = image.shape
@@ -56,10 +62,17 @@ class GreenScreen(object):
             cv2.imwrite('{0}/vigo.jpg'.format(dirname), cv2.cvtColor(vigo_background + masked_image, cv2.COLOR_RGB2BGR)) 
             
     def make_gui(self):
+        self.root.geometry("1500x1500")
         page = Frame(self.root)
         open_button = Button(self.root, text='Open file', command=self.select_input_file)
-        open_button.pack(expand=True)
+        open_button.grid(row=0, column=0)
+        image = Image.open('logo.jpg')
+        image.resize((100, 100), Image.ANTIALIAS)
+        #self.input_image = ImageTk.PhotoImage(Image.open('logo.jpg'))
+        #self.input_image = ImageTk.PhotoImage(image)
+        #self.input_image_label = Label(self.root, image=self.input_image)
+        #self.input_image_label.grid(row=1, column=0)
         edit_button = Button(self.root, text='Do greenscreen magic', command=self.do_greenscreen)
-        edit_button.pack(expand=True)
+        edit_button.grid(row=2, column=0)
 
 GreenScreen().run()
