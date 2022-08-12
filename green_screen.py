@@ -23,7 +23,7 @@ class GreenScreen(object):
         self.lower_green = np.array([0, 100, 0])
         self.upper_green = np.array([120, 255, 100])
         self.lower_blue = np.array([0, 0, 100])
-        self.upper_blue = np.array([120, 100, 255])
+        self.upper_blue = np.array([120, 120, 255])
         self.has_internet = connect()
         self.blue_green = IntVar(self.root,1)
         self.name_var = StringVar()
@@ -59,37 +59,49 @@ class GreenScreen(object):
             messagebox.showinfo("Error!", "Please check that both name and email are filled in")
             return
         image = cv2.imread(self.filename)
+        background = cv2.imread('GhostBustersBackground.jpg')
         height, width, colors = image.shape
+        bg_height, bg_width, bg_colors = background.shape
         image_copy = np.copy(image)
         image_copy = cv2.cvtColor(image_copy, cv2.COLOR_BGR2RGB)
-        if self.blue_green.get == 1:
+        background = cv2.cvtColor(background, cv2.COLOR_BGR2RGB)
+        if bg_width > width:
+            background = cv2.resize(background, (width, height))
+        if self.blue_green.get() == 1:
             mask = cv2.inRange(image_copy, self.lower_blue, self.upper_blue)
         else:
             mask = cv2.inRange(image_copy, self.lower_green, self.upper_green)
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
-        vigo_background = cv2.imread('vigo_background.jpg')
-        vigo_background = cv2.cvtColor(vigo_background, cv2.COLOR_BGR2RGB)
-        v_height, v_width, v_colors = vigo_background.shape
-        if height > v_height and width > v_width:
-            # crop the input picture
-            cropped_image = cv2.resize(image_copy, (v_width, v_height))
-            # get center of width
-            #diff_width = width - v_width
-            #half_diff_width = int(diff_width/2)
-            #r_width = width - half_diff_width
-            #bottom = height - v_height
-            #cropped_image = cropped_image[half_diff_width:r_width, bottom:v_height]
-            mask = cv2.inRange(cropped_image, self.lower_green, self.upper_green)
-            masked_image = np.copy(cropped_image)
-            masked_image[mask != 0] = [0,0,0]
-            vigo_background[mask == 0] = [0,0,0]
-            dirname = self.name_var.get().replace(' ', '') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
-            mkdir(dirname)
-            with open('{0}/info.txt'.format(dirname), 'w') as output_text:
-                output_text.write('Name: {0}\n'.format(self.name_var.get()))
-                output_text.write('Email: {0}\n'.format(self.email_var.get()))
-            cv2.imwrite('{0}/vigo.jpg'.format(dirname), cv2.cvtColor(vigo_background + masked_image, cv2.COLOR_RGB2BGR)) 
+        background[mask == 0] = [0, 0, 0]
+        dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        mkdir(dirname)
+        with open('{0}/info.txt'.format(dirname), 'w') as output_text:
+            output_text.write('Name: {0}\n'.format(self.name_var.get()))
+            output_text.write('Email: {0}\n'.format(self.email_var.get()))
+        cv2.imwrite('{0}/{1}_ghostbusters.jpg'.format(dirname, self.name_var.get().split()[0]), cv2.cvtColor(background + masked_image, cv2.COLOR_RGB2BGR))
+        #vigo_background = cv2.imread('vigo_background.jpg')
+        #vigo_background = cv2.cvtColor(vigo_background, cv2.COLOR_BGR2RGB)
+        #v_height, v_width, v_colors = vigo_background.shape
+        #if height > v_height and width > v_width:
+        #    # crop the input picture
+        #    cropped_image = cv2.resize(image_copy, (v_width, v_height))
+        #    # get center of width
+        #    #diff_width = width - v_width
+        #    #half_diff_width = int(diff_width/2)
+        #    #r_width = width - half_diff_width
+        #    #bottom = height - v_height
+        #    #cropped_image = cropped_image[half_diff_width:r_width, bottom:v_height]
+        #    mask = cv2.inRange(cropped_image, self.lower_green, self.upper_green)
+        #    masked_image = np.copy(cropped_image)
+        ##    masked_image[mask != 0] = [0,0,0]
+        #    vigo_background[mask == 0] = [0,0,0]
+        #    dirname = self.name_var.get().replace(' ', '') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        #    mkdir(dirname)
+        #    with open('{0}/info.txt'.format(dirname), 'w') as output_text:
+        #        output_text.write('Name: {0}\n'.format(self.name_var.get()))
+        #        output_text.write('Email: {0}\n'.format(self.email_var.get()))
+        #    cv2.imwrite('{0}/vigo.jpg'.format(dirname), cv2.cvtColor(vigo_background + masked_image, cv2.COLOR_RGB2BGR)) 
             
     def make_gui(self):
         #self.root.geometry("1500x1500")
