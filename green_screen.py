@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 from os import mkdir
 from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox
@@ -8,6 +9,8 @@ import urllib.request
 import cv2
 import numpy as np
 from PIL import ImageTk, Image
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Attachment, FileName, FileType, FileContent, Disposition
 
 def connect(host='http://google.com'):
     try:
@@ -20,14 +23,18 @@ class GreenScreen(object):
     def __init__(self):
         self.root = Tk()
         self.root.wm_title('HVGB Green Screen Editor')
-        self.lower_green = np.array([0, 100, 0])
+        self.lower_green = np.array([0, 80, 0])
         self.upper_green = np.array([120, 255, 100])
         self.lower_blue = np.array([0, 0, 100])
         self.upper_blue = np.array([120, 120, 255])
         self.has_internet = connect()
         self.blue_green = IntVar(self.root,1)
+        self.send_email = IntVar(self.root, 1)
         self.name_var = StringVar()
         self.email_var = StringVar()
+        with open('new_key.txt', 'r') as key_mat:
+            key = key_mat.readlines()[0].strip()
+        self.sg = SendGridAPIClient(key)
 
     def run(self):
         self.make_gui()
@@ -54,6 +61,32 @@ class GreenScreen(object):
         #self.input_image_label = Label(self.root, image=self.input_image)
         #self.input_image_label.grid(row=1, column=0)
 
+    def do_email(self, dirname, filename, name, email):
+        message = Mail(
+            from_email='photos@hudsonvalleyghostbusters.org',
+            to_emails=email,
+            subject='Photo from Hudson Valley Ghostbusters!',
+            html_content='''
+                Hi {0},<br>Please enjoy the attached photo from the Hudson Valley Ghostbusters!
+            '''.format(name)
+        )
+        with open('{0}/{1}_ghostbusters.jpg'.format(dirname, filename), 'rb') as img:
+            data = img.read()
+        encoded_file = base64.b64encode(data).decode()
+        attached_file = Attachment(
+            FileContent(encoded_file),
+            FileName('{0}_ghostbusters.jpg'.format(filename)),
+            FileType('image/jpg'),
+            Disposition('attachment')
+        )
+        message.attachment = attached_file
+        try:
+            response = self.sg.send(message)
+            print(response.status_code, response.body, response.headers)
+        except Exception as e:
+            print(e.message)
+            messagebox.showinfo('Error!', 'Oops, could not send email. Please try manually')
+            
     def do_greenscreen(self):
         if not self.name_var.get() or not self.email_var.get():
             messagebox.showinfo("Error!", "Please check that both name and email are filled in")
@@ -76,10 +109,15 @@ class GreenScreen(object):
         background[mask == 0] = [0, 0, 0]
         dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
+        name = self.name_var.get()
+        email = self.email_var.get()
         with open('{0}/info.txt'.format(dirname), 'w') as output_text:
-            output_text.write('Name: {0}\n'.format(self.name_var.get()))
-            output_text.write('Email: {0}\n'.format(self.email_var.get()))
+            output_text.write('Name: {0}\n'.format(name))
+            output_text.write('Email: {0}\n'.format(email))
+        filename = self.name_var.get().split()[0]
         cv2.imwrite('{0}/{1}_ghostbusters.jpg'.format(dirname, self.name_var.get().split()[0]), cv2.cvtColor(background + masked_image, cv2.COLOR_RGB2BGR))
+        if self.has_internet and self.send_email.get() == 1:
+            self.do_email(dirname, filename, name, email)
         #vigo_background = cv2.imread('vigo_background.jpg')
         #vigo_background = cv2.cvtColor(vigo_background, cv2.COLOR_BGR2RGB)
         #v_height, v_width, v_colors = vigo_background.shape
@@ -139,6 +177,8 @@ class GreenScreen(object):
         self.email_entry.grid(row=1, column=1)
         Radiobutton(sub_frame, text='Blue Screen', variable=self.blue_green, value=1).grid(row=2, column=0)
         Radiobutton(sub_frame, text='Green Screen', variable=self.blue_green, value=2).grid(row=2, column=1)
+        Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1).grid(row=3, column=0)
+        Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2).grid(row=3, column=1)
         edit_button = Button(self.root, text='Do greenscreen magic', command=self.do_greenscreen)
         edit_button.grid(row=2, column=0)
 
