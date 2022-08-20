@@ -54,7 +54,7 @@ class GreenScreen(object):
         image = Image.open(self.filename)
         image.thumbnail((500,400))
         image.save('thumbnails/thumbnail.png')
-        self.input_image = ImageTk.PhotoImage(image)
+        self.input_image = ImageTk.PhotoImage(image.rotate(90))
         self.input_image_label = Label(self.root, image=self.input_image)
         self.input_image_label.grid(row=1, column=0)
         #self.input_image = PhotoImage(file=self.filename)
@@ -107,7 +107,7 @@ class GreenScreen(object):
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
         background[mask == 0] = [0, 0, 0]
-        dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
         name = self.name_var.get()
         email = self.email_var.get()
@@ -118,6 +118,12 @@ class GreenScreen(object):
         cv2.imwrite('{0}/{1}_ghostbusters.jpg'.format(dirname, self.name_var.get().split()[0]), cv2.cvtColor(background + masked_image, cv2.COLOR_RGB2BGR))
         if self.has_internet and self.send_email.get() == 1:
             self.do_email(dirname, filename, name, email)
+        #image = Image.open('{0}/{1}_ghostbusters.jpg'.format(dirname, filename))
+        #image.thumbnail((500,400))
+        #image.save('D:/thumbnails/thumbnail.png')
+        #self.output_image = ImageTk.PhotoImage(image)
+        #self.output_image_label = Label(self.root, image=self.input_image)
+        #self.input_image_label.grid(row=3, column=0)
         #vigo_background = cv2.imread('vigo_background.jpg')
         #vigo_background = cv2.cvtColor(vigo_background, cv2.COLOR_BGR2RGB)
         #v_height, v_width, v_colors = vigo_background.shape
