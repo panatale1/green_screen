@@ -1,9 +1,9 @@
 import base64
 from datetime import datetime
 from os import mkdir
-from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox
+from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox, Toplevel
 #from tkinter.ttk import *
-from tkinter.ttk import Button
+from tkinter.ttk import Button, Combobox
 import urllib.request
 
 import cv2
@@ -32,6 +32,8 @@ class GreenScreen(object):
         self.send_email = IntVar(self.root, 1)
         self.name_var = StringVar()
         self.email_var = StringVar()
+        self.portrait_land = IntVar(self.root, 0)
+        self.landscape_bg = StringVar()
         with open('new_key.txt', 'r') as key_mat:
             key = key_mat.readlines()[0].strip()
         self.sg = SendGridAPIClient(key)
@@ -39,7 +41,22 @@ class GreenScreen(object):
     def run(self):
         self.make_gui()
         self.root.mainloop()
-    
+
+    def choice_popup(self):
+        if self.portrait_land.get():
+            win = Toplevel()
+            win.wm_title('Select Background')
+            l = Label(win, text="Select your background")
+            l.grid(row=0, column=0)
+            box = Combobox(win, textvariable=self.landscape_bg)
+            box['values'] = ['cemetery.jpg', 'cemeteryillustration.jpg', 'ghostsgraveyard.jpg', 'HauntedMansion.jpg', 'HauntedMansion_Int.jpg', 'LavaForest.jpg']
+            box['state'] = 'readonly'
+            box.grid(row=1, column=0)
+            b = Button(win, text='Okay', command=win.destroy)
+            b.grid(row=2, column=0)
+            self.root.wait_window(win)
+        self.do_greenscreen()
+
     def select_input_file(self):
         file_types = (
             ('images', '*.jpg'),
@@ -92,7 +109,10 @@ class GreenScreen(object):
             messagebox.showinfo("Error!", "Please check that both name and email are filled in")
             return
         image = cv2.imread(self.filename)
-        background = cv2.imread('GhostBustersBackground.jpg')
+        if self.portrait_land.get():
+            background = cv2.imread('backgrounds/' + self.landscape_bg.get())
+        else:
+            background = cv2.imread('backgrounds/GhostBustersBackground.jpg')
         height, width, colors = image.shape
         bg_height, bg_width, bg_colors = background.shape
         image_copy = np.copy(image)
@@ -107,7 +127,8 @@ class GreenScreen(object):
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
         background[mask == 0] = [0, 0, 0]
-        dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        #dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
         name = self.name_var.get()
         email = self.email_var.get()
@@ -185,7 +206,9 @@ class GreenScreen(object):
         Radiobutton(sub_frame, text='Green Screen', variable=self.blue_green, value=2).grid(row=2, column=1)
         Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1).grid(row=3, column=0)
         Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2).grid(row=3, column=1)
-        edit_button = Button(self.root, text='Do greenscreen magic', command=self.do_greenscreen)
+        Radiobutton(sub_frame, text='Portrait', variable=self.portrait_land, value=0).grid(row=4, column=0)
+        Radiobutton(sub_frame, text='Landscape', variable=self.portrait_land, value=1).grid(row=4, column=1)
+        edit_button = Button(self.root, text='Do greenscreen magic', command=self.choice_popup)
         edit_button.grid(row=2, column=0)
 
 GreenScreen().run()
