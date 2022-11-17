@@ -1,7 +1,7 @@
 import base64
 from datetime import datetime
 from os import mkdir
-from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox, Toplevel
+from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox, Toplevel, Scale, HORIZONTAL, NORMAL, DISABLED
 #from tkinter.ttk import *
 from tkinter.ttk import Button, Combobox
 import urllib.request
@@ -25,7 +25,7 @@ class GreenScreen(object):
         self.root.wm_title('HVGB Green Screen Editor')
         self.lower_green = np.array([0, 80, 0])
         self.upper_green = np.array([120, 255, 150])
-        self.lower_blue = np.array([0, 0, 70])
+        self.lower_blue = np.array([0, 0, 50])  # This was set due to the new light setup. slider can change that
         self.upper_blue = np.array([120, 150, 255])
         self.has_internet = connect()
         self.blue_green = IntVar(self.root,1)
@@ -34,13 +34,34 @@ class GreenScreen(object):
         self.email_var = StringVar()
         self.portrait_land = IntVar(self.root, 0)
         self.landscape_bg = StringVar()
-        with open('new_key.txt', 'r') as key_mat:
-            key = key_mat.readlines()[0].strip()
-        self.sg = SendGridAPIClient(key)
+        self.lower_bound = IntVar()
+        self.lower_bound.set(self.lower_blue[2])
+        try:
+            with open('new_key.txt', 'r') as key_mat:
+                key = key_mat.readlines()[0].strip()
+            self.sg = SendGridAPIClient(key)
+        except FileNotFoundError:  # key is not available
+            self.has_internet = False
+        if not self.has_internet:
+            self.send_email = 2
 
     def run(self):
         self.make_gui()
         self.root.mainloop()
+
+    def set_lower_bound(self, val):
+        if self.blue_green.get() == 1:
+            self.lower_blue = np.array([0, 0, val])
+            print(self.lower_blue)
+        elif self.blue_green.get() == 2:
+            self.lower_green = np.array([0, val, 0])
+            print(self.lower_green)
+    
+    def set_slider(self):
+        if self.blue_green.get() == 1:
+            self.lower_bound.set(self.lower_blue[2])
+        elif self.blue_green.get() == 2:
+            self.lower_bound.set(self.lower_green[1])
 
     def choice_popup(self):
         if self.portrait_land.get():
@@ -202,12 +223,13 @@ class GreenScreen(object):
         self.email_entry = Entry(sub_frame, textvariable=self.email_var)
         self.name_entry.grid(row=0, column=1)
         self.email_entry.grid(row=1, column=1)
-        Radiobutton(sub_frame, text='Blue Screen', variable=self.blue_green, value=1).grid(row=2, column=0)
-        Radiobutton(sub_frame, text='Green Screen', variable=self.blue_green, value=2).grid(row=2, column=1)
-        Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1).grid(row=3, column=0)
-        Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2).grid(row=3, column=1)
+        Radiobutton(sub_frame, text='Blue Screen', variable=self.blue_green, value=1, command=self.set_slider).grid(row=2, column=0)
+        Radiobutton(sub_frame, text='Green Screen', variable=self.blue_green, value=2, command=self.set_slider).grid(row=2, column=1)
+        Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1, state=NORMAL if self.has_internet else DISABLED).grid(row=3, column=0)
+        Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2, state=NORMAL if self.has_internet else DISABLED).grid(row=3, column=1)
         Radiobutton(sub_frame, text='Portrait', variable=self.portrait_land, value=0).grid(row=4, column=0)
         Radiobutton(sub_frame, text='Landscape', variable=self.portrait_land, value=1).grid(row=4, column=1)
+        Scale(sub_frame, label='Lower bound', variable=self.lower_bound, command=self.set_lower_bound, from_=20, to=100, orient=HORIZONTAL, resolution=5).grid(row=5, columnspan=2)
         edit_button = Button(self.root, text='Do greenscreen magic', command=self.choice_popup)
         edit_button.grid(row=2, column=0)
 
