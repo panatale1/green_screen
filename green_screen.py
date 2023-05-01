@@ -49,6 +49,39 @@ class GreenScreen(object):
         self.make_gui()
         self.root.mainloop()
 
+    def set_key(self):
+        try:
+            with open('new_key.txt', 'r') as key_mat:
+                key = key_mat.readlines()[0].strip()
+            self.sg = SendGridAPIClient(key)
+            return True
+        except FileNotFoundError:  # key is not downloaded
+            return False
+
+    def check_internet(self):
+        if connect():
+            if self.set_key():
+                self.has_internet = True
+            else:
+                self.has_internet = False
+        else:
+            self.has_internet = False
+        if not self.has_internet:
+            self.send_email = 2
+            self.send_email_button.state = DISABLED
+            self.send_email_button.grid(row=3, column=0)
+            self.no_email_button.state = DISABLED
+            self.no_email_button.grid(row=3, column=1)
+            self.auto_delivery = Label(self.root, text='CANNOT do auto-delivery', fg='red')
+            self.auto_delivery.grid(row=0, column=1)
+        else:
+            self.send_email_button.state = NORMAL
+            self.send_email_button.grid(row=3, column=0)
+            self.no_email_button.state = NORMAL
+            self.no_email_button.grid(row=3, column=1)
+            self.auto_delivery = Label(self.root, text='Can do auto-delivery')
+            self.auto_delivery.grid(row=0, column=1)
+
     def set_lower_bound(self, val):
         if self.blue_green.get() == 1:
             self.lower_blue = np.array([0, 0, val])
@@ -199,10 +232,12 @@ class GreenScreen(object):
         else:
             text = 'CANNOT do auto-delivery'
         if self.has_internet:
-            auto_delivery = Label(self.root, text=text)
+            self.auto_delivery = Label(self.root, text=text)
         else:
-            auto_delivery = Label(self.root, text=text, fg='red')
-        auto_delivery.grid(row=0, column=1)
+            self.auto_delivery = Label(self.root, text=text, fg='red')
+        self.auto_delivery.grid(row=0, column=1)
+        internet_button = Button(self.root, text='Check internet', command=self.check_internet)
+        internet_button.grid(row=0, column=2)
         image = Image.open('logo.jpg')
         image.thumbnail((200,200))
         image.save('logo_thumnbail.png')
@@ -225,8 +260,10 @@ class GreenScreen(object):
         self.email_entry.grid(row=1, column=1)
         Radiobutton(sub_frame, text='Blue Screen', variable=self.blue_green, value=1, command=self.set_slider).grid(row=2, column=0)
         Radiobutton(sub_frame, text='Green Screen', variable=self.blue_green, value=2, command=self.set_slider).grid(row=2, column=1)
-        Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1, state=NORMAL if self.has_internet else DISABLED).grid(row=3, column=0)
-        Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2, state=NORMAL if self.has_internet else DISABLED).grid(row=3, column=1)
+        self.send_email_button = Radiobutton(sub_frame, text='Send Email', variable=self.send_email, value=1, state=NORMAL if self.has_internet else DISABLED)
+        self.send_email_button.grid(row=3, column=0)
+        self.no_email_button = Radiobutton(sub_frame, text="Don't Send Email", variable=self.send_email, value=2, state=NORMAL if self.has_internet else DISABLED)
+        self.no_email_button.grid(row=3, column=1)
         Radiobutton(sub_frame, text='Portrait', variable=self.portrait_land, value=0).grid(row=4, column=0)
         Radiobutton(sub_frame, text='Landscape', variable=self.portrait_land, value=1).grid(row=4, column=1)
         Scale(sub_frame, label='Lower bound', variable=self.lower_bound, command=self.set_lower_bound, from_=20, to=100, orient=HORIZONTAL, resolution=5).grid(row=5, columnspan=2)
