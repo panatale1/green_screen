@@ -84,10 +84,10 @@ class GreenScreen(object):
 
     def set_lower_bound(self, val):
         if self.blue_green.get() == 1:
-            self.lower_blue = np.array([0, 0, val])
+            self.lower_blue = np.array([0, 0, int(val)])
             print(self.lower_blue)
         elif self.blue_green.get() == 2:
-            self.lower_green = np.array([0, val, 0])
+            self.lower_green = np.array([0, int(val), 0])
             print(self.lower_green)
     
     def set_slider(self):
@@ -125,7 +125,7 @@ class GreenScreen(object):
         image = Image.open(self.filename)
         image.thumbnail((500,400))
         image.save('thumbnails/thumbnail.png')
-        self.input_image = ImageTk.PhotoImage(image.rotate(90))
+        self.input_image = ImageTk.PhotoImage(image)
         self.input_image_label = Label(self.root, image=self.input_image)
         self.input_image_label.grid(row=1, column=0)
         #self.input_image = PhotoImage(file=self.filename)
@@ -181,8 +181,8 @@ class GreenScreen(object):
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
         background[mask == 0] = [0, 0, 0]
-        dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
-        #dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        #dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
         name = self.name_var.get()
         email = self.email_var.get()
