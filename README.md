@@ -1,6 +1,7 @@
 # green_screen
 TODO:
 * Print from gui
+* Do multiple background replacement? 
 
 # Install:
 * Install Python
