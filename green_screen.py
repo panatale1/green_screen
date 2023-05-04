@@ -181,8 +181,8 @@ class GreenScreen(object):
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
         background[mask == 0] = [0, 0, 0]
-        #dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
-        dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        #dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
         name = self.name_var.get()
         email = self.email_var.get()
