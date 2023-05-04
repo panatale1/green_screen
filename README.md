@@ -1,6 +1,5 @@
 # green_screen
 TODO:
-* Thumbnails for output image(s)
 * Print from gui
 
 # Install:
@@ -17,6 +16,7 @@ TODO:
 * Choose photo orientation (available backgrounds change depending on orientation)
 * Click `Do Greenscreen Magic` button
 * If photo is oriented in landscape, choose a background
+* Output thumbnail will pop up. Validate that chromakey is good enough or not, select whether to send email or not
 
 # Notes:
 * The code is hardcoded to output to D drive, because of the use of an SD card as external media. Change this as necessary
