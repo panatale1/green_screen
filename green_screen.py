@@ -103,7 +103,7 @@ class GreenScreen(object):
             l = Label(win, text="Select your background")
             l.grid(row=0, column=0)
             box = Combobox(win, textvariable=self.landscape_bg)
-            box['values'] = ['cemetery.jpg', 'cemeteryillustration.jpg', 'ghostsgraveyard.jpg', 'HauntedMansion.jpg', 'HauntedMansion_Int.jpg', 'LavaForest.jpg']
+            box['values'] = ['cemetery.jpg', 'cemeteryillustration.jpg', 'Ecto-1.jpg', 'ghostsgraveyard.jpg', 'HauntedMansion.jpg', 'HauntedMansion_Int.jpg', 'LavaForest.jpg']
             box['state'] = 'readonly'
             box.grid(row=1, column=0)
             b = Button(win, text='Okay', command=win.destroy)
