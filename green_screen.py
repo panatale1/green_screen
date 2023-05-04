@@ -45,6 +45,7 @@ class GreenScreen(object):
             self.has_internet = False
         if not self.has_internet:
             self.send_email = 2
+        self.file_name = ''
 
     def run(self):
         self.make_gui()
@@ -112,6 +113,36 @@ class GreenScreen(object):
             self.root.wait_window(win)
         self.do_greenscreen()
 
+    def preview_popup(self):
+        win = Toplevel()
+        win.wm_title('File Preview')
+        image = Image.open(self.file_name)
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif = dict(image.getexif().items())
+        if orientation in exif.keys() and exif[orientation] == 8:
+            image.thumbnail((800, 1000))
+            image.save('thumbnails/output_tnail.png')
+            preview_image = ImageTk.PhotoImage(image.rotate(90, expand=True))
+        else:
+            image.thumbnail((1000, 800))
+            image.save('thumbnails/output_tnail.png')
+            preview_image = ImageTk.PhotoImage(image)
+        preview_image_label = Label(win, image=preview_image)
+        preview_image_label.grid(row=0, columnspan=2)
+        if self.send_email.get() == 1:
+            # Only comes up if someone is getting digital delivery
+            email_label = Label(win, text='Send email?')
+            email_label.grid(row=1, columnspan=2)
+            send_email_button = Radiobutton(win, text='Send Email', variable=self.send_email, value=1, state=NORMAL)
+            send_email_button.grid(row=2, column=0)
+            no_email_button = Radiobutton(win, text="Don't Send Email", variable=self.send_email, value=2, state=NORMAL)
+            no_email_button.grid(row=2, column=1)
+        b = Button(win, text='Dismiss', command=win.destroy)
+        b.grid(row=1 if self.send_email.get() == 2 else 3, columnspan=2)
+        self.root.wait_window(win)
+
     def select_input_file(self):
         file_types = (
             ('images', '*.jpg'),
@@ -153,7 +184,7 @@ class GreenScreen(object):
                 Hi {0},<br>Please enjoy the attached photo from the Hudson Valley Ghostbusters!
             '''.format(name)
         )
-        with open('{0}/{1}_ghostbusters.jpg'.format(dirname, filename), 'rb') as img:
+        with open(self.file_name, 'rb') as img:
             data = img.read()
         encoded_file = base64.b64encode(data).decode()
         attached_file = Attachment(
@@ -203,10 +234,11 @@ class GreenScreen(object):
         with open('{0}/info.txt'.format(dirname), 'w') as output_text:
             output_text.write('Name: {0}\n'.format(name))
             output_text.write('Email: {0}\n'.format(email))
-        filename = self.name_var.get().split()[0]
-        cv2.imwrite('{0}/{1}_ghostbusters.jpg'.format(dirname, self.name_var.get().split()[0]), cv2.cvtColor(background + masked_image, cv2.COLOR_RGB2BGR))
+        self.file_name = '{0}/{1}_ghostbusters.jpg'.format(dirname, self.name_var.get().split()[0])
+        cv2.imwrite(self.file_name, cv2.cvtColor(background + masked_image, cv2.COLOR_RGB2BGR))
+        self.preview_popup()
         if self.has_internet and self.send_email.get() == 1:
-            self.do_email(dirname, filename, name, email)
+            self.do_email(dirname, self.file_name, name, email)
         #image = Image.open('{0}/{1}_ghostbusters.jpg'.format(dirname, filename))
         #image.thumbnail((500,400))
         #image.save('D:/thumbnails/thumbnail.png')
