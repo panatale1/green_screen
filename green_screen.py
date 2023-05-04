@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from os import mkdir
+import platform
 from tkinter import Tk, filedialog, Frame, messagebox, PhotoImage, Label, Entry, IntVar, Radiobutton, StringVar, messagebox, Toplevel, Scale, HORIZONTAL, NORMAL, DISABLED
 #from tkinter.ttk import *
 from tkinter.ttk import Button, Combobox
@@ -8,7 +9,7 @@ import urllib.request
 
 import cv2
 import numpy as np
-from PIL import ImageTk, Image
+from PIL import ImageTk, Image, ExifTags
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail, Attachment, FileName, FileType, FileContent, Disposition
 
@@ -123,9 +124,20 @@ class GreenScreen(object):
             filetypes=file_types
         )
         image = Image.open(self.filename)
-        image.thumbnail((500,400))
-        image.save('thumbnails/thumbnail.png')
-        self.input_image = ImageTk.PhotoImage(image)
+        #image.thumbnail((500,400))
+        #image.save('thumbnails/thumbnail.png')
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif = dict(image._getexif().items())
+        if exif[orientation] == 8:
+            image.thumbnail((400, 500))
+            image.save('thumbnails/thumbnail.png')
+            self.input_image = ImageTk.PhotoImage(image.rotate(90, expand=True))
+        else:
+            image.thumbnail((500, 400))
+            image.save('thumbnails/thumbnail.png')
+            self.input_image = ImageTk.PhotoImage(image)
         self.input_image_label = Label(self.root, image=self.input_image)
         self.input_image_label.grid(row=1, column=0)
         #self.input_image = PhotoImage(file=self.filename)
@@ -181,8 +193,10 @@ class GreenScreen(object):
         masked_image = np.copy(image_copy)
         masked_image[mask != 0] = [0,0,0]
         background[mask == 0] = [0, 0, 0]
-        dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
-        #dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        if platform.system() == 'Windows':
+            dirname = "D:/" + self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
+        else:
+            dirname = self.name_var.get().replace(' ', '_') + datetime.now().strftime("__%Y_%m_%d__%H_%M_%S")
         mkdir(dirname)
         name = self.name_var.get()
         email = self.email_var.get()
